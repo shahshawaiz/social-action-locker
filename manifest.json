@@ -1,0 +1,24 @@
+{
+  "manifest_version": 2,
+
+  "name": "Action Locker",
+  "description": "This extension prevents accidential social actions by locking/unlocking them.",
+  "version": "1.0",
+
+  // "browser_action": {
+  //   "default_icon": "img/icon.png",
+  //   "default_popup": "popup.html",
+  //   "default_title": "Action Locker v1.0"
+  // },
+  "options_page": "options.html",
+  "permissions": [
+    "storage"
+  ],
+  "content_scripts":[
+    {    
+        "matches": ["http://*/*", "https://*/*"],
+        "js":["libs/jquery/jquery-3.2.1.min.js", "js/content.js"],
+        "css":["css/options.css"]
+    }
+  ]
+}
