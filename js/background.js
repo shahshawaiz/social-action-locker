@@ -8,7 +8,7 @@
  * constants
  */
 
-console.log('background js load');
+console.log('background js load start...');
 
 var endpoint = 'http://parse-shah.herokuapp.com/parse/classes/SocialLockerActions';
 var endpoint_app_id = 'parse-shah';
@@ -35,7 +35,7 @@ var action_media_facebook_id_defaults = [
 ];
 
 /**
-* [selectors remote call]
+* fetch social-action properties
 *
 * header 
 *   X-Parse-Application-Id   : pasre-shah
@@ -65,30 +65,50 @@ function fetch_actions(media_id){
          url: endpoint_with_media,
          type: "GET",
          beforeSend: function(xhr){
-			xhr.setRequestHeader('X-Parse-Application-Id', endpoint_app_id);
-			xhr.setRequestHeader('Content-Type', 'application/json');
+      			xhr.setRequestHeader('X-Parse-Application-Id', endpoint_app_id);
+      			xhr.setRequestHeader('Content-Type', 'application/json');
          },
          success: function(res) {
-
+            // facebook storage
+            set_storage('media_facebook', 'test');
          }
-      });
+  });
 }
 
-function update_storage(media_facebook_response){
-  chrome.storage.sync.set({'media_facebook': media_facebook_response}, function() {
-    // Notify that we saved.
-    console.log('background js @ storage set'); 
-  }); 
+/**
+ * set storage variable
+ * @param {[type]} media_facebook_response [description]
+ */
+function set_storage(key, value){
+
+    chrome.storage.local.set({key: value}, function() {
+      // Notify that we saved.
+    });
 }
 
-media_facebook_response = fetch_actions(media_facebook);
-update_storage(media_facebook_response);
+/**
+ * get storage variable
+ * @param {[type]} media_facebook_response [description]
+ */
+function get_storage(key){
 
-chrome.storage.local.get(function(result){
-  // console.log(result);
-  console.log(result);
-  console.log('background js @ storage get');
-});  
+    results = {};
+
+    chrome.storage.local.get(key, function (result) {
+        results = result;
+    });
+
+    return results;
+}
+
+// storage listner
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+  for (key in changes) {
+    var storageChange = changes[key];
+    console.log(key.toString());    
+    console.log(storageChange);
+  }
+});
 
 // chrome.runtime.onMessage.addListener(function(response, sender, sendResponse){
 // });
