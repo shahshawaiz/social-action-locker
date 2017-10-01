@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Social Action Locker</title>
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	<link rel="stylesheet" href="libs/bootstrap/bootstrap.min.css">
+	<link rel="stylesheet" href="css/options.css">
+
+	<script src="libs/jquery/jquery-3.2.1.min.js"></script>
+	<script src="libs/bootstrap/bootstrap.min.js"></script>
+	<script src="libs/underscore/underscore-min.js"></script>
+	<script src="libs/react/react.min.js"></script>	
+	<script src="libs/react/react-dom.min.js"></script>
+	<script src="libs/angular/angular.min.js"></script>
+
+	<script src="js/background.js"></script>	
+	<script src="js/controller.js"></script>
+
+</head>
+<body>
+
+<div ng-app="module_app" ng-controller="controller_options">
+{{ firstName + " " + lastName }}
+</div>
+
+
+<div class="container">
+	<h1>
+		Configuration 		
+		<button class="btn btn-xs btn-success"><span class="glyphicon glyphicon-ok"></span> Update</button>
+		<button class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove"></span> Close</button>
+	</h1>
+	<p>Check to lock/unlock relevent feature</p>
+
+	<div class="col-md-12 content-header">
+		<h2>Facebook</h2>
+		<!-- <img class="img img-responsive" src="img/1.png"> -->
+	</div>
+	<div class="col-md-12 content-detail">
+
+	<?php 
+		foreach(action_groups as action_group){ 
+	?>
+			<legend><?= action_group ?></legend>
+	<?php 
+		}
+	?>
+		<legend>News Feed</legend>
+		<div class="row">
+			<div class="col-md-5">
+				<div class="col-md-6">
+					Like			
+				</div>
+				<div class="col-md-6">
+					<label class="switch">
+					  <input type="checkbox" checked>
+					  <span class="slider round"></span>
+					</label>	
+				</div>	
+
+				<div class="col-md-6">
+					Comment				
+				</div>
+				<div class="col-md-6">
+					<label class="switch">
+					  <input type="checkbox" checked>
+					  <span class="slider round"></span>
+					</label>	
+				</div>	
+
+				<div class="col-md-6">
+					Share				
+				</div>
+				<div class="col-md-6">
+					<label class="switch">
+					  <input type="checkbox" checked>
+					  <span class="slider round"></span>
+					</label>	
+				</div>	
+			</div>
+			<div class="col-md-7">
+				<img class="img img-responsive" src="img/1a.png">
+			</div>
+		</div>
+
+		<legend>Comment Section</legend>
+		<div class="row">
+			<div class="col-md-5">
+				<div class="col-md-6">
+					Like			
+				</div>
+				<div class="col-md-6">
+					<label class="switch">
+					  <input type="checkbox" checked>
+					  <span class="slider round"></span>
+					</label>	
+				</div>			
+
+				<div class="col-md-6">
+					Reply				
+				</div>
+				<div class="col-md-6">
+					<label class="switch">
+					  <input type="checkbox" checked>
+					  <span class="slider round"></span>
+					</label>	
+				</div>				
+			</div>
+			<div class="col-md-7">
+				<img class="img img-responsive" src="img/1b.png">
+			</div>		
+		</div>						
+	</div>
+
+
+	<div class="col-md-12 content-footer" style="text-align: center">
+
+	</div>
+</div>
+
+
+</body>
+</html>
