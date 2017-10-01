@@ -68,44 +68,48 @@ function fetch_actions(media_id){
       			xhr.setRequestHeader('X-Parse-Application-Id', endpoint_app_id);
       			xhr.setRequestHeader('Content-Type', 'application/json');
          },
-         success: function(res) {
+         success: function(response) {
             // facebook storage
-            set_storage('media_facebook', 'test');
+            status = set_storage({ 'media_facebook' : response.results }, function(){
+                console.log('Storage Update: ' + 'media_facebook');
+            });
          }
   });
 }
 
 /**
- * set storage variable
- * @param {[type]} media_facebook_response [description]
+ * get storage variable
  */
-function set_storage(key, value){
-
-    chrome.storage.local.set({key: value}, function() {
-      // Notify that we saved.
-    });
+function get_storage(key, callback){
+    chrome.storage.local.get(key, callback);
 }
 
 /**
- * get storage variable
- * @param {[type]} media_facebook_response [description]
+ * set storage variable
  */
-function get_storage(key){
+function set_storage(objects, callback){
+    chrome.storage.local.set(objects, callback);
+}
 
-    results = {};
+/**
+ * remove storage variable
+ */
+function remove_storage(key, callback){
+    chrome.storage.local.remove(key, callback);
+}
 
-    chrome.storage.local.get(key, function (result) {
-        results = result;
-    });
 
-    return results;
+/**
+ * remove storage variable
+ */
+function clear_storage(callback){
+    chrome.storage.local.clear(callback);
 }
 
 // storage listner
 chrome.storage.onChanged.addListener(function(changes, namespace) {
   for (key in changes) {
     var storageChange = changes[key];
-    console.log(key.toString());    
     console.log(storageChange);
   }
 });
