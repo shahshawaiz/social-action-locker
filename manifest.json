@@ -15,13 +15,13 @@
     "storage"
   ],
   "background": {
-    "scripts": ["libs/jquery/jquery-3.2.1.min.js", "js/background.js", "js/controller.js"],
+    "scripts": ["libs/jquery/jquery-3.2.1.min.js", "js/common.js", "js/controller.js"],
     "persistent": false
   },
   "content_scripts":[
     {    
         "matches": ["http://*/*", "https://*/*"],
-        "js":["libs/jquery/jquery-3.2.1.min.js", "js/content.js"],
+        "js":["libs/jquery/jquery-3.2.1.min.js", "js/common.js", "js/content.js"],
         "css":["css/options.css"]
     }
   ]
