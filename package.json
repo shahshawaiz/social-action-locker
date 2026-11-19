@@ -1,0 +1,11 @@
+{
+  "name": "social-action-locker",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Chrome extension that locks accidental likes, shares, friend requests and other actions on Facebook.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node test/run.js",
+    "package": "sh scripts/package.sh"
+  }
+}
