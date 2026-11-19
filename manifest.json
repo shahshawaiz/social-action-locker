@@ -1,28 +1,33 @@
 {
-  "manifest_version": 2,
-
+  "manifest_version": 3,
   "name": "Action Locker",
-  "description": "This extension prevents accidential social actions by locking/unlocking them.",
-  "version": "1.0",
-
-  // "browser_action": {
-  //   "default_icon": "img/icon.png",
-  //   "default_popup": "popup.html",
-  //   "default_title": "Action Locker v1.0"
-  // },
-  "options_page": "options.html",
-  "permissions": [
-    "storage"
-  ],
-  "background": {
-    "scripts": ["libs/jquery/jquery-3.2.1.min.js", "js/common.js", "js/controller.js"],
-    "persistent": false
+  "description": "Lock likes, shares, friend requests and other one-click actions on Facebook, so you never do them by accident.",
+  "version": "2.0.0",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
-  "content_scripts":[
-    {    
-        "matches": ["http://*/*", "https://*/*"],
-        "js":["libs/jquery/jquery-3.2.1.min.js", "js/common.js", "js/content.js"],
-        "css":["css/options.css"]
+  "action": {
+    "default_title": "Action Locker",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "options_page": "options/options.html",
+  "permissions": ["storage", "activeTab"],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.facebook.com/*"],
+      "js": ["src/platforms.js", "src/core.js", "src/content.js"],
+      "css": ["src/content.css"],
+      "run_at": "document_start",
+      "all_frames": false
     }
   ]
 }

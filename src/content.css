@@ -1,0 +1,27 @@
+/* Locked buttons: dimmed, with a cursor that says "not now". */
+[data-sal-locked="block"] {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  filter: grayscale(0.6);
+}
+
+[data-sal-locked="confirm"] {
+  cursor: help !important;
+}
+
+/* A quick "nope" shake when a locked button is clicked. */
+[data-sal-shake] {
+  animation: sal-shake 0.4s ease !important;
+}
+
+@keyframes sal-shake {
+  0%, 100% { translate: 0; }
+  20% { translate: -5px; }
+  40% { translate: 5px; }
+  60% { translate: -3px; }
+  80% { translate: 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-sal-shake] { animation: none !important; }
+}
