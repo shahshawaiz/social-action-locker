@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Action Locker settings</title>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <header class="top">
+      <img src="../icons/icon128.png" alt="" width="44" height="44">
+      <div>
+        <h1>Action Locker</h1>
+        <p class="muted">Pick the one-click actions you never want to do by accident. Changes save as you go.</p>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2>When I click a locked action</h2>
+      <div class="modes" role="radiogroup" aria-label="Lock mode">
+        <label class="mode">
+          <input type="radio" name="mode" value="block">
+          <span><b>Block it</b><small>Nothing happens and a short note says it's locked.</small></span>
+        </label>
+        <label class="mode">
+          <input type="radio" name="mode" value="confirm">
+          <span><b>Ask me first</b><small>A dialog asks "do it anyway?" before it goes through.</small></span>
+        </label>
+      </div>
+    </section>
+
+    <div id="platforms"></div>
+
+    <section class="card footer-card">
+      <div>
+        <h2>Your stats</h2>
+        <p class="muted" id="stats-line">No actions blocked yet.</p>
+      </div>
+      <div class="footer-buttons">
+        <button id="reset-stats">Reset stats</button>
+        <button id="reset-all">Restore defaults</button>
+      </div>
+    </section>
+
+    <p class="muted small">Everything stays in your browser: settings sync through your Chrome profile, stats stay on this device. Nothing is sent anywhere.</p>
+    <span id="saved" class="saved" role="status" aria-live="polite"></span>
+  </main>
+
+  <template id="platform-tpl">
+    <section class="card platform">
+      <div class="platform-head">
+        <h2 class="platform-name"></h2>
+        <span class="pill count"></span>
+        <span class="spacer"></span>
+        <button class="lock-all">Lock all</button>
+        <button class="unlock-all">Unlock all</button>
+        <label class="switch" title="Turn Action Locker on or off for this site">
+          <input type="checkbox" class="platform-enabled">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="groups"></div>
+    </section>
+  </template>
+
+  <script src="../src/platforms.js"></script>
+  <script src="../src/core.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

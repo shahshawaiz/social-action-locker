@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Action Locker</title>
+  <link rel="stylesheet" href="../options/shared.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="../icons/icon48.png" alt="" width="24" height="24">
+    <h1>Action Locker</h1>
+    <span id="mode" class="pill"></span>
+  </header>
+
+  <section id="site" hidden>
+    <div class="site-row">
+      <div>
+        <div id="site-name" class="site-name"></div>
+        <div id="site-status" class="muted"></div>
+      </div>
+      <label class="switch" title="Lock actions on this site">
+        <input type="checkbox" id="site-enabled">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="pause-row">
+      <button data-pause="15">Pause 15 min</button>
+      <button data-pause="60">Pause 1 h</button>
+      <button data-pause="0" id="resume" hidden>Resume</button>
+    </div>
+  </section>
+
+  <section id="unsupported" class="muted" hidden>
+    Not a supported site. Action Locker works on Facebook.
+  </section>
+
+  <section class="hero">
+    <div class="hero-num"><span id="total">0</span><small>accidental actions stopped</small></div>
+    <div class="hero-side">
+      <div class="badge-stat" id="streak-box" title="Days in a row Action Locker caught something">
+        <span class="flame">🔥</span><b id="streak">0</b><small>day streak</small>
+      </div>
+      <div class="badge-stat"><b id="today">0</b><small>today</small></div>
+    </div>
+  </section>
+
+  <section class="chart-card">
+    <div class="chart-title">Last 7 days</div>
+    <div id="chart" class="chart" role="img"></div>
+    <table id="chart-table" class="sr-only"><thead><tr><th>Day</th><th>Stopped</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <section>
+    <div class="chart-title">Achievements <span id="ach-count" class="muted"></span></div>
+    <div id="achievements" class="achievements"></div>
+  </section>
+
+  <ol id="top" class="top"></ol>
+
+  <footer>
+    <a href="#" id="open-options">Choose what to lock →</a>
+  </footer>
+
+  <script src="../src/platforms.js"></script>
+  <script src="../src/core.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
