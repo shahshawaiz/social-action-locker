@@ -1,0 +1,15 @@
+# Build output
+dist/
+*.zip
+*.crx
+*.pem
+
+# Secrets (none are needed; keep them out anyway)
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+node_modules/
