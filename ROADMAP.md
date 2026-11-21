@@ -4,116 +4,166 @@
 
 Manifest V3 extension that locks chosen actions on Facebook (like, comment, share, comment like,
 reply, add friend) in block or ask-first mode, with per-site pause, playful feedback and a stats
-dashboard in the popup. Pure logic (`src/core.js`) has unit tests; the matching of real page
-markup has none yet, and there is no CI.
+dashboard in the popup. The pure logic (`src/core.js`) has unit tests. The part that matters most,
+recognising buttons in real page markup and stopping their events, has no tests at all, because
+that needs a browser.
 
-## Where it is going
+## The big goal: a browser core of its own
 
-**End state:** a lock you can trust, on the five sites people scroll most (Facebook, X, LinkedIn,
-Instagram, YouTube), plus a keyword filter that hides posts and videos you don't want to see.
-Every lockable action and every filter rule is proven, by an offline test suite run in CI, to work
-when it should and stay out of the way when it shouldn't.
+Action Locker lives or dies on four pieces of the web platform: how HTML becomes a tree, how CSS
+selectors match that tree (including `:has()` and shadow DOM), how events travel through it
+(capture, bubble, `composedPath()`, pointer, mouse, touch and keyboard sequences), and when
+`MutationObserver` callbacks and timers run. Today it can only be tested by hand, in Chrome, on
+live sites.
 
-**The hard part:** the extension has to recognise one button among thousands on pages whose markup
-is obfuscated, changes without notice, differs by language and A/B test, and sometimes lives in
-shadow DOM; then stop the event before the site's own handlers see it (pointer, touch, click,
-double-tap and keyboard paths all differ per site), and, in ask-first mode, replay it faithfully.
-The keyword filter has the same problem in reverse: find the post or video card around the text,
-hide exactly that card, and keep up with infinite scroll. A false positive breaks the site; a
-false negative is the bug the extension exists to prevent.
+The plan is to build those pieces from scratch as **`engine/`**: a headless DOM engine in plain
+JavaScript with no dependencies. It runs under Node or JavaScriptCore, needs no browser, no
+network and no package install, and is good enough to load Action Locker's real content script
+against saved pages of five social sites and check every lock.
 
-**Success bar for the project** (all checked by `npm test`, offline, and in CI):
+### End state
 
-1. Every action in `src/platforms.js` has at least one fixture where it must be blocked and one
-   negative fixture (look-alike button, post text containing "Like", etc.) where it must not be.
-   100 % pass, zero false positives, on all five sites.
-2. The same fixtures pass in at least two interface languages per site.
-3. The keyword filter hides every matching post or video card in the fixtures and nothing else
-   (not comments, menus or the user's own posts).
-4. A marking pass over a 2,000-button fixture page stays under a fixed time budget.
-5. Ask-first mode replays the action on the original element in every fixture.
-6. CI is green on every push and pull request.
+- `engine/` parses HTML per the WHATWG tree-construction algorithm, builds a spec-shaped DOM
+  (including shadow roots and slots), matches CSS Selectors Level 4, dispatches DOM and UI events
+  the way browsers do, and runs a deterministic event loop (tasks, microtasks, timers, animation
+  frames, mutation observers) on a virtual clock.
+- A fixture suite of five sites (Facebook, X, LinkedIn, Instagram, YouTube), with made-up
+  content, runs `src/content.js` unmodified on top of `engine/` and checks every action.
+- Action Locker itself grows to those five sites, a keyword filter and the rest of the plans below,
+  each feature landing with fixture tests that run on the engine.
+
+### The hard parts
+
+- **HTML parsing is not "read the tags".** The tree-construction algorithm has insertion modes,
+  implied tags, foster parenting for tables, the adoption agency algorithm for misnested
+  formatting tags, and many error-recovery rules. Real social-site markup exercises most of them.
+- **Selectors are a language.** Tokenising per CSS Syntax Level 3, parsing complex and relative
+  selectors, specificity, `:is()`/`:where()`/`:not()`/`:has()`, `:nth-child(An+B of S)`,
+  attribute matching with case flags, and doing it fast enough: `:has()` naively is quadratic.
+- **Event dispatch is subtle.** Retargeting across shadow boundaries, `composedPath()` with closed
+  roots, `stopImmediatePropagation` vs `stopPropagation`, passive listeners, cancelable vs not,
+  `once`, listeners added or removed during dispatch, and the exact order of pointer, mouse, touch
+  and click events for one tap.
+- **Timing is behaviour.** When `MutationObserver` callbacks run relative to microtasks, timers and
+  animation frames decides whether the extension's marking keeps up with an infinite feed. The
+  engine has to model it deterministically so tests are repeatable.
+
+### Success bar
+
+All checked offline with `npm test`; the conformance suites are vendored into the repository with
+their licences.
+
+1. **HTML parsing:** at least 90 % of the html5lib-tests tree-construction cases (scripting off)
+   produce the exact expected tree.
+2. **DOM, events, shadow DOM, selectors:** chosen web-platform-tests directories (`dom/nodes`,
+   `dom/events`, `shadow-dom`, `css/selectors`) run on the engine through a `testharness.js`
+   adapter, with a per-directory pass rate of at least 90 %. Every skipped test is listed with a
+   reason.
+3. **Action Locker on the engine:** every action on all five sites has a fixture where it must be
+   blocked and a negative fixture where it must not be. 100 % pass, zero false positives. The same
+   fixtures pass in two interface languages per site.
+4. **Performance:** `querySelectorAll` with `:has()` over a 50,000-node page, and a full marking
+   pass over a 2,000-button page, each stay under a fixed time budget on a laptop CPU.
+5. **Determinism:** the full suite gives the same result on every run, under both Node and
+   JavaScriptCore.
 
 ## Milestones
 
-Each milestone ends with tests that must pass; none of them needs network access.
+Each one ends with tests that must pass. None needs network access, a GPU or Docker.
 
-### 1. Offline fixture harness and CI
-- Hand-built HTML fixtures for Facebook (feed, single post, comments, profile) that copy the real
-  markup structure, with made-up names and text only.
-- A DOM test runner that loads `src/content.js` against a fixture, dispatches real pointer, click
-  and key events, and asserts blocked / allowed / confirm dialog shown.
-- GitHub Actions workflow: unit tests, fixture tests, manifest validation and a syntax check of
-  every script on each push and pull request; a packaged zip as a build artifact.
-- **Done when:** success-bar items 1 and 6 pass for Facebook.
+### 1. Test harness and conformance plumbing
+- Vendor html5lib-tests and the chosen web-platform-tests directories, with their licences.
+- A runner for html5lib `.dat` files and a `testharness.js` adapter, both reporting pass rates per
+  file and directory, with an expected-failures list so regressions stand out.
+- **Done when:** the suites run end to end against an empty engine and report 0 %.
 
-### 2. More sites: X, LinkedIn, Instagram, YouTube
-- **X:** like, repost, reply, bookmark, send a post, follow; X's single-key shortcuts
-  (`L`, `T`, `R`, `B`) locked along with their buttons.
-- **LinkedIn:** react, comment, repost, send privately, connect, follow.
-- **Instagram:** like (including double-tap on photos and videos), comment, share, save, follow.
-- **YouTube:** like, dislike, subscribe, like a comment, post a comment, on watch pages and Shorts.
-- Fixtures for each site before its selectors are written; keyboard and double-tap paths tested.
-- **Done when:** success-bar item 1 passes on all five sites.
+### 2. DOM core
+- `Node`, `Document`, `Element`, `Text`, `Comment`, `DocumentFragment`, attributes, tree
+  mutation methods, live `HTMLCollection` and static `NodeList`, `textContent`, `classList`,
+  `dataset`, `closest`, `contains`, `isConnected`.
+- **Done when:** `dom/nodes` reaches its target.
 
-### 3. Keyword filter
-- Hide posts (Facebook, X, LinkedIn, Instagram) and videos (YouTube) that mention chosen words.
-- Matching: whole words, any case, `crypto*` prefix wildcards, phrases, hashtags, non-English
-  letters; regex characters treated literally.
-- Two styles: fold into a "click to show" bar, or remove completely; re-check cards as infinite
-  scroll fills them in.
-- Settings: keyword chips with suggestions, per-site on/off.
-- **Done when:** success-bar item 3 passes on all five sites, and matching has unit tests.
+### 3. HTML parser
+- Tokenizer and tree construction per the WHATWG spec, scripting off: all insertion modes,
+  implied end tags, foster parenting, adoption agency, character references, `<template>`.
+- `innerHTML` and `outerHTML` serialisation.
+- **Done when:** success-bar item 1 passes.
 
-### 4. "Try it here" playground
-- A panel of made-up posts in the options page that follows the current settings, so users can
-  feel each lock, mode and keyword before using it on a real site.
-- **Done when:** every mode and filter style can be exercised in the playground, with tests.
+### 4. Selector engine
+- CSS Syntax tokenizer, selector parser, specificity.
+- Matching for all simple, compound, complex and relative selectors, `:has()` included;
+  `matches`, `closest`, `querySelector(All)`.
+- Indexes (by id, class, tag, attribute) and `:has()` short-cuts to hit the performance budget.
+- **Done when:** `css/selectors` reaches its target and the `:has()` benchmark meets its budget.
 
-### 5. Matching engine v2
-- Split matching out of `content.js` into a tested module; ranked fallback selectors per action;
-  locale-independent signals first (`data-testid`, custom element names, icon shapes), text last.
-- Second-language fixtures for each site.
-- Incremental marking (only mutated subtrees) instead of full-page rescans.
-- **Done when:** success-bar items 2 and 4 pass.
+### 5. Events and shadow DOM
+- `EventTarget` and the DOM dispatch algorithm; `Event`, `UIEvent`, `MouseEvent`, `PointerEvent`,
+  `KeyboardEvent`, `TouchEvent`; synthesised input sequences for a click, a tap, a double tap and
+  a key press.
+- `attachShadow` (open and closed), slots and slot assignment, event retargeting,
+  `composedPath()`.
+- **Done when:** `dom/events` and `shadow-dom` reach their targets.
 
-### 6. Interaction modes and rules
-- Hold-to-confirm mode, and faithful replay in ask-first mode on sites that act on pointer events.
-- Schedules: lock automatically in chosen time windows (time zone and DST handled, unit-tested).
-- Per-account rules: lock follows/likes only for listed accounts (needs author extraction per site).
-- **Done when:** success-bar item 5 passes and the schedule and rule logic has unit tests.
+### 6. Event loop and observers
+- Virtual clock with tasks, microtasks, `setTimeout`/`setInterval`, `requestAnimationFrame` and
+  `MutationObserver` in browser order; `run until idle` and `advance by N ms` for tests.
+- A minimal `chrome.storage` / `chrome.runtime` shim so the extension's scripts load unchanged.
+- **Done when:** `src/content.js` runs on a Facebook fixture and the first lock tests pass
+  deterministically under Node and JavaScriptCore.
 
-## TODO: content blocking (after the keyword filter)
+### 7. Five-site fixture suite and multi-site Action Locker
+- Hand-built fixtures, with made-up content, that copy the real markup structure of Facebook, X,
+  LinkedIn, Instagram and YouTube (feeds, single posts, comments, profiles, YouTube watch pages
+  and Shorts), each in two interface languages.
+- Add the four new sites to Action Locker: X (like, repost, reply, bookmark, post, follow, plus
+  its single-key shortcuts), LinkedIn (react, comment, repost, send, connect, follow), Instagram
+  (like including double-tap, comment, share, save, follow), YouTube (like, dislike, subscribe,
+  comment like, post comment).
+- **Done when:** success-bar item 3 passes.
 
-- [ ] **Block by account**: hide everything from listed accounts, channels or pages.
-- [ ] **Block by type**: Shorts, Reels, "Suggested for you", promoted/sponsored posts, live streams.
-- [ ] **Advanced keywords**: exclusions (`-word`), "all of these words", optional regular expressions.
-- [ ] **Hide the numbers**: like, view and follower counts.
-- [ ] **Hide comment sections** per site.
-- [ ] **Focus mode**: hide the whole home feed and keep search, messages and notifications.
-- [ ] **Blur instead of fold**: show a blurred post with the matched word, click to reveal.
-- [ ] A "hidden today" counter and a log of what was hidden and why, kept on the device only.
+### 8. Content filtering and the playground
+- Keyword filter: hide posts and videos that mention chosen words (whole words, prefix wildcards,
+  phrases, hashtags), folded into a "click to show" bar or removed; tested on the engine against
+  every site's fixtures, including infinite-scroll growth.
+- "Try it here" playground of made-up posts in the options page, driven by the same settings.
+- **Done when:** the filter hides every matching card in the fixtures and nothing else
+  (no comments, menus or the user's own posts).
 
-## TODO: other ideas
+### 9. Performance, CI and release
+- Incremental marking (only mutated subtrees) using the engine's mutation records; meet
+  success-bar item 4.
+- GitHub Actions: unit tests, conformance suites with pass-rate reports, fixture suite, manifest
+  check and a packaged zip on every push and pull request.
+- Publish `engine/` as a standalone package with its own README and conformance table.
 
-- [ ] **Cool-down mode**: a locked action unlocks only after a 10-second countdown.
-- [ ] **Daily budget**: allow 5 likes a day, then lock; resets at midnight.
-- [ ] **Time limits per site**, with a gentle full-page reminder when one is used up.
-- [ ] **Undo window**: after an allowed action, a 5-second toast to undo it.
-- [ ] **Weekly report** in the options page: stopped actions and hidden posts by site.
-- [ ] More achievements once there are more sites (for example, saved on three different sites).
-- [ ] Keyboard shortcut to pause the current site (`chrome.commands`).
-- [ ] Firefox build; publish to the Chrome Web Store and Firefox Add-ons.
-- [ ] Translations of the interface.
+## Later: content blocking
+
+- [ ] Block by account: hide everything from listed accounts, channels or pages.
+- [ ] Block by type: Shorts, Reels, "Suggested for you", promoted posts, live streams.
+- [ ] Advanced keywords: exclusions (`-word`), "all of these words", optional regular expressions.
+- [ ] Hide the numbers: like, view and follower counts.
+- [ ] Hide comment sections per site; focus mode that hides the whole home feed.
+- [ ] Blur instead of fold, and a "hidden today" log kept on the device only.
+
+## Later: other ideas
+
+- [ ] Hold-to-confirm and cool-down modes; a daily like budget; an undo window.
+- [ ] Schedules (time zone and DST aware) and per-account rules.
+- [ ] Time limits per site; weekly report in the options page.
+- [ ] More achievements once there are more sites.
+- [ ] Engine: CSS cascade and computed style for `display`/`visibility`, so tests can tell
+      whether a hidden post is really hidden.
+- [ ] Firefox build; Chrome Web Store and Firefox Add-ons releases; translations.
 
 ## Working offline
 
 Everything above is built and checked without internet: the extension has no server and makes no
-network requests, the fixtures live in the repository, and the tests need only Node (or macOS's
-JavaScriptCore for the pure-logic suite). No GPU, Docker, sound or cloud service is involved.
+network requests, the engine has no dependencies, the conformance suites and fixtures live in the
+repository, and the tests need only Node or JavaScriptCore. No GPU, Docker, sound or cloud
+service is involved.
 
-The one thing that needs a live connection is checking fixtures against the current real sites.
-That happens outside working sessions; fixtures never contain real people's names, photos or posts.
+Checking fixtures against the current live sites needs a connection and happens outside working
+sessions. Fixtures never contain real people's names, photos or posts.
 
 ## Done
 

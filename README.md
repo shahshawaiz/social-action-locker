@@ -22,8 +22,10 @@ little friction before liking or sharing on autopilot.
 - **Private by design:** no network requests and no analytics. Settings sync through your Chrome
   profile; stats stay on your device.
 
-Support for X, LinkedIn, Instagram and YouTube, a keyword filter and more are planned: see
-[ROADMAP.md](ROADMAP.md).
+**What's next:** a dependency-free headless browser core (`engine/`: HTML parser, DOM, CSS
+selectors, events, shadow DOM, event loop) checked against html5lib-tests and web-platform-tests,
+so the extension can be tested offline on five sites. Then support for X, LinkedIn, Instagram and
+YouTube, a keyword filter and more. See [ROADMAP.md](ROADMAP.md).
 
 ## Built with
 
